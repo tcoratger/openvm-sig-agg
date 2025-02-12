@@ -35,4 +35,10 @@ module_name_repetitions = "allow"
 p3-baby-bear = { git = "https://github.com/Plonky3/Plonky3.git", rev = "88d7f059500fd956a7c1eb121e08653e5974728d" }
 p3-field = { git = "https://github.com/Plonky3/Plonky3.git", rev = "88d7f059500fd956a7c1eb121e08653e5974728d" }
 p3-monty-31 = { git = "https://github.com/Plonky3/Plonky3.git", rev = "88d7f059500fd956a7c1eb121e08653e5974728d" }
+p3-symmetric = { git = "https://github.com/Plonky3/Plonky3.git", rev = "88d7f059500fd956a7c1eb121e08653e5974728d" }
+p3-poseidon2 = { git = "https://github.com/Plonky3/Plonky3.git", rev = "88d7f059500fd956a7c1eb121e08653e5974728d" }
+
+zkhash = { git = "https://github.com/HorizenLabs/poseidon2.git", rev = "bb476b9" }
+
 num-bigint = "0.4"
+lazy_static = "1.0"

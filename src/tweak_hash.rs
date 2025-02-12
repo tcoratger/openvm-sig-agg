@@ -1,3 +1,13 @@
+use crate::{
+    poseidon2::{poseidon2_compress, Poseidon2BabyBearShort},
+    poseidon2_config::{poseidon2_instance, poseidon2_instance_short},
+    tweak::{PoseidonTweak, TweakTransfformation},
+};
+use p3_baby_bear::{BabyBear, Poseidon2BabyBear};
+use p3_field::FieldAlgebra;
+
+const DOMAIN_PARAMETERS_LENGTH: usize = 4;
+
 /// A Poseidon tweak hash representation.
 ///
 /// This struct defines a tweakable hash function based on the Poseidon2 permutation.
@@ -32,6 +42,7 @@
 /// - `NUM_CHUNKS`: Defines the total number of chunks used to process an input message. This
 ///   determines how the message is split for hashing and affects the overall signature scheme
 ///   efficiency.
+#[derive(Debug, Clone)]
 pub struct PoseidonTweakHash<
     const LOG_LIFETIME: usize,
     const CEIL_LOG_NUM_CHAINS: usize,
@@ -41,7 +52,11 @@ pub struct PoseidonTweakHash<
     const TWEAK_LEN: usize,
     const CAPACITY: usize,
     const NUM_CHUNKS: usize,
->;
+> {
+    parameter: [BabyBear; PARAMETER_LEN],
+    tweak: PoseidonTweak,
+    message: Vec<[BabyBear; HASH_LEN]>,
+}
 
 impl<
         const LOG_LIFETIME: usize,
@@ -64,4 +79,56 @@ impl<
         NUM_CHUNKS,
     >
 {
+    pub fn apply(&self) -> [BabyBear; HASH_LEN] {
+        match self.message.len() {
+            1 => {
+                // we compress parameter, tweak, message
+                let tweak_fe: [_; TWEAK_LEN] = self.tweak.to_field_elements();
+                let combined_input: Vec<BabyBear> = self
+                    .parameter
+                    .iter()
+                    .chain(tweak_fe.iter())
+                    .chain(self.message[0].iter())
+                    .cloned()
+                    .collect();
+                poseidon2_compress::<HASH_LEN, _>(&poseidon2_instance_short(), &combined_input)
+            }
+            2 => {
+                let tweak_fe: [_; TWEAK_LEN] = self.tweak.to_field_elements();
+
+                let combined_input: Vec<BabyBear> = self
+                    .parameter
+                    .iter()
+                    .chain(tweak_fe.iter())
+                    .chain(self.message[0].iter())
+                    .chain(self.message[1].iter())
+                    .cloned()
+                    .collect();
+
+                poseidon2_compress::<HASH_LEN, _>(&poseidon2_instance(), &combined_input)
+            }
+            _ => {
+                let tweak_fe: [_; TWEAK_LEN] = self.tweak.to_field_elements();
+
+                let combined_input: Vec<BabyBear> = self
+                    .parameter
+                    .iter()
+                    .chain(tweak_fe.iter())
+                    .chain(self.message.iter().flat_map(|sub_arr| sub_arr.iter()))
+                    .cloned()
+                    .collect();
+
+                let lengths: [usize; DOMAIN_PARAMETERS_LENGTH] =
+                    [PARAMETER_LEN, TWEAK_LEN, NUM_CHUNKS, HASH_LEN];
+
+                let poseidon_instance = poseidon2_instance();
+
+                // let safe_input =
+                //     poseidon_safe_domain_separator::<CAPACITY>(&poseidon_instance, &lengths);
+                // poseidon_sponge(&poseidon_instance, &safe_input, &combined_input)
+
+                [BabyBear::ZERO; HASH_LEN]
+            }
+        }
+    }
 }
